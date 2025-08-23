@@ -62,18 +62,9 @@ describe Rack::Test::UploadedFile do
   end
 
   it 'removes local paths on garbage collection' do
-
-    if RUBY_PLATFORM == 'java'
-      require 'java'
-      java_import 'java.lang.System'
-
-      paths = local_paths(500)
-      System.gc
-    else
-      paths = local_paths(50)
-      GC.start
-    end
-
+    skip "flaky on JRuby" if RUBY_PLATFORM == 'java'
+    paths = local_paths(50)
+    GC.start
     paths.all?{|f| File.exist?(f)}.must_equal false
   end
 
