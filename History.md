@@ -1,3 +1,10 @@
+## main
+
+* Minor enhancements:
+  * Add `Rack::Test::Session#default_input_content_type` and
+    `#convert_input_hash_to_string` private methods to allow for
+    easier overriding of default behavior. (Haruki Kobayashi #359)
+
 ## 2.2.0 / 2024-12-23
 
 * Bug fixes:
