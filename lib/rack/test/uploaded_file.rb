@@ -50,6 +50,7 @@ module Rack
 
       # Delegate all methods not handled to the tempfile.
       def method_missing(method_name, *args, &block)
+        # TODO: After Ruby <2.7.3 support is dropped, switch to ...
         tempfile.public_send(method_name, *args, &block)
       end
 
