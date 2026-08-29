@@ -7,6 +7,20 @@ describe Rack::Test::UploadedFile do
     File.dirname(__FILE__) + '/../../fixtures/foo.txt'
   end
 
+  it 'rewinds after appending raises' do
+    uploaded_file = Rack::Test::UploadedFile.new(
+      StringIO.new('content'),
+      original_filename: 'content.txt'
+    )
+    buffer = Object.new
+    def buffer.<<(_chunk)
+      raise IOError, 'append failed'
+    end
+
+    proc { uploaded_file.append_to(buffer) }.must_raise(IOError)
+    uploaded_file.pos.must_equal 0
+  end
+
   it 'returns an instance of `Rack::Test::UploadedFile`' do
     uploaded_file = Rack::Test::UploadedFile.new(file_path)
 

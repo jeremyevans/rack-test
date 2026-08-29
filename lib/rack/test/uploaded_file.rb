@@ -61,12 +61,13 @@ module Rack
       def append_to(buffer)
         tempfile.rewind
 
-        buf = String.new
-        buffer << tempfile.readpartial(65_536, buf) until tempfile.eof?
-
-        tempfile.rewind
-
-        nil
+        begin
+          buf = String.new
+          buffer << tempfile.readpartial(65_536, buf) until tempfile.eof?
+          nil
+        ensure
+          tempfile.rewind
+        end
       end
 
       def respond_to_missing?(method_name, include_private = false) #:nodoc:
