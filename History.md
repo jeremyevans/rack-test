@@ -1,5 +1,13 @@
 ## main
 
+* Bug fixes:
+  * Do not mutate arguments given to `Rack::Utils.build_multipart`
+    (Oskar Eichler #361)
+  * Rewind `tempfile` if there are errors when appending in
+    `UploadedFile#append_to` (Oskar Eichler #363)
+  * Preserve request method and params for 308 redirects (requires
+    Rack 2+) (Oskar Eichler #364)
+
 * Minor enhancements:
   * Add `Rack::Test::Session#default_input_content_type` and
     `#convert_input_hash_to_string` private methods to allow for
