@@ -497,14 +497,14 @@ describe 'Rack::Test::Session#follow_redirect!' do
     end.must_raise(Rack::Test::Error)
   end
 
-
   it 'keeps the original method and params for HTTP 308' do
     post '/redirect?status=308', foo: 'bar'
     follow_redirect!
     last_response.body.must_include 'post'
     last_response.body.must_include 'foo'
     last_response.body.must_include 'bar'
-  end
+  end if Rack.release >= '2'
+
   it 'keeps the original method and params for HTTP 307' do
     post '/redirect?status=307', foo: 'bar'
     follow_redirect!

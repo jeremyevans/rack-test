@@ -211,7 +211,8 @@ module Rack
           raise Error, 'Last response was not a redirect. Cannot follow_redirect!'
         end
 
-        if last_response.status == 307 || last_response.status == 308
+        case last_response.status
+        when 307, 308
           request_method = last_request.request_method
           params = last_request.params
         else
