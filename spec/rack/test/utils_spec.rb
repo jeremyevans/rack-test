@@ -149,7 +149,8 @@ describe 'Rack::Test::Utils.build_multipart' do
   end
 
   it 'builds mixed hash and primitive arrays without mutating them' do
-    values = [{'id' => '1'}, 'two', {'id' => '3'}].freeze
+    uploaded_file = Rack::Test::UploadedFile.new(multipart_file('bar.txt'))
+    values = [{'id' => '1'}, 'two', {'id' => '3'}, uploaded_file].freeze
     data = Rack::Test::Utils.build_multipart('items' => values)
 
     options = {
@@ -158,9 +159,15 @@ describe 'Rack::Test::Utils.build_multipart' do
       :input => StringIO.new(data)
     }
     params = Rack::Multipart.parse_multipart(Rack::MockRequest.env_for('/', options))
+    values.must_equal [{'id' => '1'}, 'two', {'id' => '3'}, uploaded_file]
 
-    params['items'].must_equal [{'id' => '1'}, 'two', {'id' => '3'}]
-    values.must_equal [{'id' => '1'}, 'two', {'id' => '3'}]
+    items = params['items']
+    uploaded_param = items.pop
+    items.must_equal [{'id' => '1'}, 'two', {'id' => '3'}]
+    uploaded_param[:filename].must_equal "bar.txt"
+    uploaded_param[:type].must_equal "text/plain"
+    uploaded_param[:name].must_equal "items[]"
+    uploaded_param[:tempfile].must_be_kind_of File
   end
 
   it 'builds multipart bodies from mixed array of a file and a primitive' do
