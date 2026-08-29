@@ -99,7 +99,7 @@ module Rack
 
       # Append each multipart parameter value to the buffer.
       def _build_parts(buffer, parameters)
-        parameters.map do |name, value|
+        parameters.each do |name, value|
           if name =~ /\[\]\z/ && value.is_a?(Array) && value.any? { |v| v.is_a?(Hash) }
             value.each do |item|
               new_value = {}
@@ -111,7 +111,7 @@ module Rack
               _build_parts(buffer, new_value)
             end
           else
-            [value].flatten.map do |v|
+            [value].flatten.each do |v|
               if v.respond_to?(:original_filename)
                 build_file_part(buffer, name, v)
               else
