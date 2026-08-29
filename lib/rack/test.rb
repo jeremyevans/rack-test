@@ -2,7 +2,7 @@
 
 require 'uri'
 
-# :nocov:
+# simplecov:disable
 begin
   require "rack/version"
 rescue LoadError
@@ -16,7 +16,7 @@ else
     require "rack"
   end
 end
-# :nocov:
+# simplecov:enable
 
 require 'forwardable'
 
@@ -255,12 +255,12 @@ module Rack
 
       private
 
-      # :nocov:
+      # simplecov:disable
       if !defined?(Rack::RELEASE) || Gem::Version.new(Rack::RELEASE) < Gem::Version.new('2.2.2')
         def close_body(body)
           body.close if body.respond_to?(:close)
         end
-      # :nocov:
+      # simplecov:enable
       else
         # close() gets called automatically in newer Rack versions.
         def close_body(body)
@@ -281,11 +281,11 @@ module Rack
         'REMOTE_ADDR' => '127.0.0.1',
         'SERVER_PROTOCOL' => 'HTTP/1.0',
       }
-      # :nocov:
+      # simplecov:disable
       unless Rack.release >= '2.3'
         DEFAULT_ENV['HTTP_VERSION'] = DEFAULT_ENV['SERVER_PROTOCOL']
       end
-      # :nocov:
+      # simplecov:enable
       DEFAULT_ENV.freeze
       private_constant :DEFAULT_ENV
 
