@@ -100,7 +100,7 @@ module Rack
       # Append each multipart parameter value to the buffer.
       def _build_parts(buffer, parameters)
         parameters.map do |name, value|
-          if name =~ /\[\]\Z/ && value.is_a?(Array) && value.any? { |v| v.is_a?(Hash) }
+          if name =~ /\[\]\z/ && value.is_a?(Array) && value.any? { |v| v.is_a?(Hash) }
             value.each do |item|
               new_value = {}
               if item.is_a?(Hash)
