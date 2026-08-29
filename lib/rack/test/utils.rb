@@ -74,16 +74,10 @@ module Rack
 
           case value
           when Array
-            value.map do |v|
-              if v.is_a?(Hash)
-                nested_params = {}
-                normalize_multipart_params(v).each do |subkey, subvalue|
-                  nested_params[subkey] = subvalue
-                end
-                (flattened_params["#{k}[]"] ||= []) << nested_params
-              else
-                flattened_params["#{k}[]"] = value
-              end
+            next if value.empty?
+
+            flattened_params["#{k}[]"] = value.map do |v|
+              v.is_a?(Hash) ? normalize_multipart_params(v) : v
             end
           when Hash
             normalize_multipart_params(value).each do |subkey, subvalue|
@@ -106,10 +100,14 @@ module Rack
       # Append each multipart parameter value to the buffer.
       def _build_parts(buffer, parameters)
         parameters.map do |name, value|
-          if name =~ /\[\]\Z/ && value.is_a?(Array) && value.all? { |v| v.is_a?(Hash) }
-            value.each do |hash|
+          if name =~ /\[\]\Z/ && value.is_a?(Array) && value.any? { |v| v.is_a?(Hash) }
+            value.each do |item|
               new_value = {}
-              hash.each { |k, v| new_value[name + k] = v }
+              if item.is_a?(Hash)
+                item.each { |k, v| new_value[name + k] = v }
+              else
+                new_value[name] = item
+              end
               _build_parts(buffer, new_value)
             end
           else

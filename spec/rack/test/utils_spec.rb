@@ -148,6 +148,21 @@ describe 'Rack::Test::Utils.build_multipart' do
     params['files'][1][:tempfile].read.must_equal "baz\n"
   end
 
+  it 'builds mixed hash and primitive arrays without mutating them' do
+    values = [{'id' => '1'}, 'two', {'id' => '3'}].freeze
+    data = Rack::Test::Utils.build_multipart('items' => values)
+
+    options = {
+      'CONTENT_TYPE' => "multipart/form-data; boundary=#{Rack::Test::MULTIPART_BOUNDARY}",
+      'CONTENT_LENGTH' => data.length.to_s,
+      :input => StringIO.new(data)
+    }
+    params = Rack::Multipart.parse_multipart(Rack::MockRequest.env_for('/', options))
+
+    params['items'].must_equal [{'id' => '1'}, 'two', {'id' => '3'}]
+    values.must_equal [{'id' => '1'}, 'two', {'id' => '3'}]
+  end
+
   it 'builds multipart bodies from mixed array of a file and a primitive' do
     files = [Rack::Test::UploadedFile.new(multipart_file('foo.txt')), 'baz']
     data = Rack::Test::Utils.build_multipart('files' => files)
