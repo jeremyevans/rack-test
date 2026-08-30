@@ -211,13 +211,29 @@ module Rack
           raise Error, 'Last response was not a redirect. Cannot follow_redirect!'
         end
 
+        env = {
+          'HTTP_REFERER' => last_request.url,
+          'rack.session' => last_request.session,
+          'rack.session.options' => last_request.session_options
+        }
+
+        params = {}
         case last_response.status
         when 307, 308
           request_method = last_request.request_method
-          params = last_request.params
+          if (input = last_request.body)
+            if input.respond_to?(:rewind)
+              input.rewind
+              env[:input] = input
+              %w[CONTENT_TYPE CONTENT_LENGTH].each do |key|
+                env[key] = last_request.env[key] if last_request.env.key?(key)
+              end
+            else
+              params = last_request.params
+            end
+          end
         else
           request_method = 'GET'
-          params = {}
         end
 
         # Compute the next location by appending the location header with the
@@ -229,9 +245,7 @@ module Rack
           request_method,
           next_location.to_s,
           params,
-          'HTTP_REFERER' => last_request.url,
-          'rack.session' => last_request.session,
-          'rack.session.options' => last_request.session_options
+          env
         )
       end
 

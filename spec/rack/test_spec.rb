@@ -505,6 +505,71 @@ describe 'Rack::Test::Session#follow_redirect!' do
     last_response.body.must_include 'bar'
   end if Rack.release >= '2'
 
+  redirect_statuses = [307]
+  redirect_statuses << 308 if Rack.release >= '2'
+  redirect_statuses.each do |status|
+    it "replays the original body and content headers for HTTP #{status}" do
+      requests = []
+      redirecting_app = lambda do |env|
+        requests << [
+          env['REQUEST_METHOD'],
+          env['CONTENT_TYPE'],
+          env['CONTENT_LENGTH'],
+          env['QUERY_STRING'],
+          env['rack.input'].read
+        ]
+        if requests.length == 1
+          [status, {'location' => '/next?target=1'}, []]
+        else
+          [200, {}, []]
+        end
+      end
+      session = Rack::Test::Session.new(redirecting_app)
+
+      session.post('/initial?old=1', '{"count":1}', 'CONTENT_TYPE' => 'application/json')
+      session.follow_redirect!
+
+      requests.last.must_equal ['POST', 'application/json', '11', 'target=1', '{"count":1}']
+    end
+  end
+
+  it 'replays parsed params when the original input is not rewindable' do
+    input_class = Class.new do
+      def initialize(value)
+        @input = StringIO.new(value)
+      end
+
+      def read(*args)
+        @input.read(*args)
+      end
+
+      def gets(*args)
+        @input.gets(*args)
+      end
+
+      def each(&block)
+        @input.each(&block)
+      end
+    end
+    requests = []
+    redirecting_app = lambda do |env|
+      requests << [env['REQUEST_METHOD'], Rack::Request.new(env).params]
+      requests.length == 1 ? [307, {'location' => '/next'}, []] : [200, {}, []]
+    end
+    session = Rack::Test::Session.new(redirecting_app)
+
+    session.post(
+      '/initial',
+      {},
+      input: input_class.new('foo=bar'),
+      'CONTENT_TYPE' => 'application/x-www-form-urlencoded',
+      'CONTENT_LENGTH' => '7'
+    )
+    session.follow_redirect!
+
+    requests.last.must_equal ['POST', {'foo' => 'bar'}]
+  end if Rack.release >= '3'
+
   it 'keeps the original method and params for HTTP 307' do
     post '/redirect?status=307', foo: 'bar'
     follow_redirect!
