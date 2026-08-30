@@ -7,6 +7,11 @@
     `UploadedFile#append_to` (Oskar Eichler #363)
   * Preserve request method and params for 308 redirects (requires
     Rack 2+) (Oskar Eichler #364)
+  * Reuse `rack.input` in 307/308 redirect request if it is rewindable,
+    fixing cases that use application/json and other content types
+    (Oskar Eichler #367)
+  * Don't use query string parameters from original request as request
+    body parameters in 307/308 redirects (Jeremy Evans)
 
 * Minor enhancements:
   * Add `Rack::Test::Session#default_input_content_type` and

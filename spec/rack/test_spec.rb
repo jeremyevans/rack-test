@@ -515,6 +515,7 @@ describe 'Rack::Test::Session#follow_redirect!' do
           env['REQUEST_METHOD'],
           env['CONTENT_TYPE'],
           env['CONTENT_LENGTH'],
+          env['PATH_INFO'],
           env['QUERY_STRING'],
           env['rack.input'].read
         ]
@@ -529,45 +530,38 @@ describe 'Rack::Test::Session#follow_redirect!' do
       session.post('/initial?old=1', '{"count":1}', 'CONTENT_TYPE' => 'application/json')
       session.follow_redirect!
 
-      requests.last.must_equal ['POST', 'application/json', '11', 'target=1', '{"count":1}']
+      requests.must_equal [
+        ['POST', 'application/json', '11', '/initial', 'old=1', '{"count":1}'],
+        ['POST', 'application/json', '11', '/next', 'target=1', '{"count":1}']
+      ]
     end
   end
 
   it 'replays parsed params when the original input is not rewindable' do
-    input_class = Class.new do
-      def initialize(value)
-        @input = StringIO.new(value)
-      end
-
-      def read(*args)
-        @input.read(*args)
-      end
-
-      def gets(*args)
-        @input.gets(*args)
-      end
-
-      def each(&block)
-        @input.each(&block)
-      end
-    end
+    input_class = Class.new(StringIO){undef rewind}
     requests = []
     redirecting_app = lambda do |env|
-      requests << [env['REQUEST_METHOD'], Rack::Request.new(env).params]
-      requests.length == 1 ? [307, {'location' => '/next'}, []] : [200, {}, []]
+      req = Rack::Request.new(env)
+      requests << [
+        env['REQUEST_METHOD'],
+        env['CONTENT_TYPE'],
+        env['CONTENT_LENGTH'],
+        env['PATH_INFO'],
+        env['QUERY_STRING'],
+        req.GET,
+        req.POST,
+      ]
+      requests.length == 1 ? [307, {'location' => '/next?new=2'}, []] : [200, {}, []]
     end
     session = Rack::Test::Session.new(redirecting_app)
 
-    session.post(
-      '/initial',
-      {},
-      input: input_class.new('foo=bar'),
-      'CONTENT_TYPE' => 'application/x-www-form-urlencoded',
-      'CONTENT_LENGTH' => '7'
-    )
+    session.post('/initial?old=1', input_class.new('count=1'), 'CONTENT_TYPE' => 'application/x-www-form-urlencoded')
     session.follow_redirect!
 
-    requests.last.must_equal ['POST', {'foo' => 'bar'}]
+    requests.must_equal [
+      ["POST", "application/x-www-form-urlencoded", "7", "/initial", "old=1", {"old" => "1"}, {"count" => "1"}],
+      ["POST", "application/x-www-form-urlencoded", "7", "/next", "new=2", {"new" => "2"}, {"count" => "1"}]
+    ]
   end if Rack.release >= '3'
 
   it 'keeps the original method and params for HTTP 307' do

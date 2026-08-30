@@ -229,7 +229,7 @@ module Rack
                 env[key] = last_request.env[key] if last_request.env.key?(key)
               end
             else
-              params = last_request.params
+              params = last_request.POST
             end
           end
         else
