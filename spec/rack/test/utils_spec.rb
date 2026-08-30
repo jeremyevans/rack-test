@@ -63,7 +63,7 @@ describe "Rack::Test::Utils#build_nested_query" do
     original = Rack::Test::Utils.override_build_nested_query
     Rack::Test::Utils.override_build_nested_query = true
     begin
-      query = if Gem::Version.new(Rack.release) < Gem::Version.new("3.1")
+      query = if Gem::Version.new(Rack.release) < Gem::Version.new("3.0.2")
                 'a[b]=c'
               else
                 'a%5Bb%5D=c'
