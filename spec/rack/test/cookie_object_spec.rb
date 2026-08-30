@@ -1,7 +1,13 @@
 # frozen-string-literal: true
 
 require_relative '../../spec_helper'
-require 'cgi'
+begin
+  require 'cgi/escape'
+rescue LoadError
+  require 'cgi'
+else
+  require 'cgi' unless CGI.method_defined?(:escape)
+end
 
 describe Rack::Test::Cookie do
   value = 'the cookie value'.freeze
